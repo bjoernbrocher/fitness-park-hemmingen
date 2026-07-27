@@ -11,6 +11,13 @@ let adminQrPayload = "";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const qrPrefix = "fitness-park-hemmingen|checkin|";
+const supabaseConfig = {
+  url: "https://kyjcbmwzcxbymbcuwtfw.supabase.com",
+  key: "sb_publishable__hA3dloiAmPSDNqknW4GlA_NFXxTF11"
+};
+let remoteReady = false;
+let remoteVisits = [];
+let remoteSystemLog = [];
 const member = { name: "Anna Meyer", initials: "AM", number: "4711" };
 const storageKeys = {
   activeVisit: "fitnessParkActiveVisit",
@@ -26,8 +33,8 @@ const demoVisits = [
 
 function initialsList(target, filter = "") {
   const normalized = filter.trim().toLowerCase();
-  const active = loadActiveVisit();
-  const realRows = active ? [[member.name, member.initials, formatTime(active.start), durationText(new Date(active.start), new Date())]] : [];
+  const active = activeVisitForDisplay();
+  const realRows = active ? [[active.memberName || member.name, member.initials, formatTime(active.start), durationText(new Date(active.start), new Date())]] : [];
   const rows = [...realRows, ...people].filter(([name]) => name.toLowerCase().includes(normalized));
   target.innerHTML = rows.map(([name, initials, time, duration]) => `
     <article class="person">
@@ -85,9 +92,103 @@ function saveActiveVisit(visit) {
 }
 
 function addSystemLog(type, message) {
+  const entry = { id: crypto.randomUUID(), type, message, at: new Date().toISOString() };
   const log = readJson(storageKeys.log, []);
-  log.unshift({ id: crypto.randomUUID(), type, message, at: new Date().toISOString() });
+  log.unshift(entry);
   writeJson(storageKeys.log, log.slice(0, 50));
+  return entry;
+}
+
+function mapRemoteVisit(row) {
+  return {
+    id: row.id,
+    memberName: row.member_name,
+    memberNumber: row.member_number,
+    start: row.started_at,
+    end: row.ended_at,
+    source: row.source || "qr",
+    remote: true
+  };
+}
+
+function mapRemoteLog(row) {
+  return {
+    id: row.id,
+    type: row.event_type,
+    message: row.message,
+    at: row.created_at
+  };
+}
+
+async function supabaseRequest(path, options = {}) {
+  const response = await fetch(`${supabaseConfig.url}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: supabaseConfig.key,
+      Authorization: `Bearer ${supabaseConfig.key}`,
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+  if (!response.ok) throw new Error(await response.text());
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+async function loadRemoteState() {
+  try {
+    const [visits, log] = await Promise.all([
+      supabaseRequest("fitness_visits?select=*&order=started_at.desc&limit=80"),
+      supabaseRequest("fitness_system_log?select=*&order=created_at.desc&limit=80")
+    ]);
+    remoteVisits = visits.map(mapRemoteVisit);
+    remoteSystemLog = log.map(mapRemoteLog);
+    remoteReady = true;
+    const active = remoteVisits.find((visit) => visit.memberNumber === member.number && !visit.end);
+    saveActiveVisit(active || null);
+  } catch (error) {
+    remoteReady = false;
+    console.warn("Supabase sync inactive", error);
+  }
+}
+
+async function createRemoteVisit(visit) {
+  const [row] = await supabaseRequest("fitness_visits", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      id: visit.id,
+      member_name: visit.memberName,
+      member_number: visit.memberNumber,
+      started_at: visit.start,
+      source: visit.source
+    })
+  });
+  return mapRemoteVisit(row);
+}
+
+async function completeRemoteVisit(visit) {
+  const [row] = await supabaseRequest(`fitness_visits?id=eq.${visit.id}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ ended_at: visit.end })
+  });
+  return mapRemoteVisit(row);
+}
+
+async function addRemoteSystemLog(entry) {
+  await supabaseRequest("fitness_system_log", {
+    method: "POST",
+    body: JSON.stringify({ id: entry.id, event_type: entry.type, message: entry.message, created_at: entry.at })
+  });
+}
+
+function completedVisitsForDisplay() {
+  return remoteReady ? remoteVisits.filter((visit) => visit.end) : loadVisits();
+}
+
+function activeVisitForDisplay() {
+  return remoteReady ? remoteVisits.find((visit) => visit.memberNumber === member.number && !visit.end) || null : loadActiveVisit();
 }
 
 function formatTime(value) {
@@ -125,8 +226,8 @@ function operatorVisitRow(visit) {
 }
 
 function renderLogs() {
-  const realVisits = loadVisits();
-  const active = loadActiveVisit();
+  const realVisits = completedVisitsForDisplay();
+  const active = activeVisitForDisplay();
   const allVisits = [...(active ? [active] : []), ...realVisits];
   const historyList = $("#historyList");
   historyList.innerHTML = [
@@ -142,7 +243,7 @@ function renderLogs() {
   $("#liveCount").textContent = String(37 + (active ? 1 : 0));
   $("#todayCount").textContent = String(128 + realVisits.filter((visit) => new Date(visit.start).toDateString() === new Date().toDateString()).length);
 
-  const log = readJson(storageKeys.log, []);
+  const log = remoteReady ? remoteSystemLog : readJson(storageKeys.log, []);
   $("#systemLogList").innerHTML = log.length ? log.map((entry) => `<article><span>${formatTime(entry.at)}</span><strong>${entry.type}</strong><p>${entry.message}</p></article>`).join("") : `<article><span>System</span><strong>Keine echten Ereignisse</strong><p>Check-ins und Check-outs erscheinen hier automatisch.</p></article>`;
   initialsList($("#peopleList"), $("#staffSearch").value);
   initialsList($("#attendanceList"), $("#attendanceSearch").value);
@@ -175,7 +276,7 @@ function stopQrScanner() {
   $("#qrVideo").srcObject = null;
 }
 
-function finishQrCheckIn(value) {
+async function finishQrCheckIn(value) {
   if (!validStudioQr(value)) {
     $("#scanStatus").textContent = "Das ist kein FITNESS PARK Check-in-Code.";
     return;
@@ -190,9 +291,21 @@ function finishQrCheckIn(value) {
     source: "qr"
   };
   saveActiveVisit(activeVisit);
-  addSystemLog("Check-in", `${member.name} hat per QR-Code eingecheckt.`);
+  const logEntry = addSystemLog("Check-in", `${member.name} hat per QR-Code eingecheckt.`);
   setCheckedIn(true);
   renderLogs();
+  try {
+    if (remoteReady) {
+      const remoteVisit = await createRemoteVisit(activeVisit);
+      saveActiveVisit(remoteVisit);
+      await addRemoteSystemLog(logEntry);
+      await loadRemoteState();
+      renderLogs();
+    }
+  } catch (error) {
+    remoteReady = false;
+    console.warn("Remote check-in failed", error);
+  }
   toast("Check-in per QR-Code erfolgreich");
 }
 
@@ -282,7 +395,7 @@ $("#checkAction").addEventListener("click", () => {
 $("#simulateScan").addEventListener("click", () => {
   finishQrCheckIn(adminQrPayload || generateQrPayload());
 });
-$("#checkoutForm").addEventListener("submit", (event) => {
+$("#checkoutForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   $("#checkoutDialog").close();
   const activeVisit = loadActiveVisit();
@@ -290,7 +403,17 @@ $("#checkoutForm").addEventListener("submit", (event) => {
     const completedVisit = { ...activeVisit, end: new Date().toISOString() };
     saveVisits([completedVisit, ...loadVisits()].slice(0, 30));
     saveActiveVisit(null);
-    addSystemLog("Check-out", `${member.name} hat ausgecheckt. Dauer: ${durationText(new Date(completedVisit.start), new Date(completedVisit.end))}`);
+    const logEntry = addSystemLog("Check-out", `${member.name} hat ausgecheckt. Dauer: ${durationText(new Date(completedVisit.start), new Date(completedVisit.end))}`);
+    try {
+      if (remoteReady) {
+        await completeRemoteVisit(completedVisit);
+        await addRemoteSystemLog(logEntry);
+        await loadRemoteState();
+      }
+    } catch (error) {
+      remoteReady = false;
+      console.warn("Remote check-out failed", error);
+    }
   }
   setCheckedIn(false);
   renderLogs();
@@ -319,11 +442,15 @@ $$(".filter-row button").forEach((button) => button.addEventListener("click", ()
 }));
 
 renderAdminQr();
-const restoredVisit = loadActiveVisit();
-if (restoredVisit) {
-  setCheckedIn(true);
-  checkInAt = new Date(restoredVisit.start);
+async function bootApp() {
+  await loadRemoteState();
+  const restoredVisit = activeVisitForDisplay() || loadActiveVisit();
+  if (restoredVisit) {
+    setCheckedIn(true);
+    checkInAt = new Date(restoredVisit.start);
+  }
+  renderLogs();
+  setInterval(updateDuration, 1000);
 }
-renderLogs();
-setInterval(updateDuration, 1000);
+bootApp();
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
