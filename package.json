@@ -1,0 +1,8 @@
+{
+  "name": "fitness-park-hemmingen-pwa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-worker.mjs"
+  }
+}

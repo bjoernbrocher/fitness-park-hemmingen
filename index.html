@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="FITNESS PARK in Hemmingen – sichere und transparente Anwesenheitsdokumentation.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="FITNESS PARK in Hemmingen">
+  <meta property="og:description" content="Einchecken. Trainieren. Sicher dokumentiert.">
+  <meta property="og:image" content="icons/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FITNESS PARK in Hemmingen">
+  <meta name="twitter:description" content="Einchecken. Trainieren. Sicher dokumentiert.">
+  <meta name="twitter:image" content="icons/og.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FITNESS PARK">
+  <title>FITNESS PARK in Hemmingen</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" data-go="home" aria-label="Startseite">
+        <span class="brand-mark"><img src="icons/fitness-park-logo.png" alt=""></span>
+        <span><strong>FITNESS PARK</strong><small>in Hemmingen</small></span>
+      </button>
+      <button class="avatar" id="roleToggle" aria-label="Ansicht wechseln">AM</button>
+    </header>
+
+    <main>
+      <section class="view active" id="home">
+        <div class="member-hello">
+          <div>
+            <p class="eyebrow">Montag, 27. Juli</p>
+            <h1>Hallo, Anna.</h1>
+          </div>
+          <span class="open-pill"><i></i> Geöffnet bis 23:00</span>
+        </div>
+
+        <article class="status-card" id="statusCard">
+          <div class="status-orbit">
+            <span class="status-icon" id="statusIcon">✓</span>
+          </div>
+          <p class="status-kicker" id="statusKicker">Dein Status</p>
+          <h2 id="statusTitle">Nicht eingecheckt</h2>
+          <p id="statusText">Scanne den QR-Code am Eingang,<br>um deinen Besuch zu starten.</p>
+          <div class="duration hidden" id="duration">
+            <span>Aktuelle Dauer</span>
+            <strong id="durationValue">00:00:00</strong>
+          </div>
+          <button class="primary" id="checkAction">
+            <span class="button-icon" id="actionIcon">⌗</span>
+            <span id="actionLabel">QR-Code scannen</span>
+          </button>
+          <button class="text-button hidden" id="problemButton">Problem melden</button>
+        </article>
+
+        <section class="last-visit">
+          <div class="section-title">
+            <div><p class="eyebrow">Zuletzt</p><h3>Dein letzter Besuch</h3></div>
+            <button data-go="history">Alle anzeigen</button>
+          </div>
+          <article class="visit-row">
+            <div class="date-tile"><strong>24</strong><span>JUL</span></div>
+            <div><strong>Freitagabend</strong><span>17:42 – 19:03 Uhr</span></div>
+            <span class="visit-duration">1 h 21</span>
+          </article>
+        </section>
+
+        <article class="privacy-note">
+          <span>◈</span>
+          <div><strong>Deine Daten bleiben deine.</strong><p>Die FITNESS PARK App dokumentiert nur deine Check-in- und Check-out-Zeiten. Keine Standortverfolgung.</p></div>
+        </article>
+      </section>
+
+      <section class="view" id="history">
+        <div class="page-heading"><p class="eyebrow">Dein Verlauf</p><h1>Besuche</h1><p>Nur du und berechtigte Studio-Mitarbeiter können diese Daten sehen.</p></div>
+        <div class="month-control"><button>‹</button><strong>Juli 2026</strong><button>›</button></div>
+        <div class="history-list">
+          <article><div class="date-tile"><strong>26</strong><span>JUL</span></div><div><strong>18:42 – 20:06 Uhr</strong><span>1 h 24 Min.</span></div><span class="tag green">Regulär</span></article>
+          <article><div class="date-tile"><strong>24</strong><span>JUL</span></div><div><strong>17:30 – 19:40 Uhr</strong><span>2 h 10 Min.</span></div><span class="tag orange">Nachgetragen</span></article>
+          <article><div class="date-tile"><strong>22</strong><span>JUL</span></div><div><strong>18:10 – 23:00 Uhr</strong><span>Kein regulärer Check-out</span></div><span class="tag orange">Automatisch</span></article>
+          <article><div class="date-tile"><strong>20</strong><span>JUL</span></div><div><strong>08:12 – 09:28 Uhr</strong><span>1 h 16 Min.</span></div><span class="tag green">Regulär</span></article>
+        </div>
+      </section>
+
+      <section class="view" id="profile">
+        <div class="page-heading"><p class="eyebrow">Konto</p><h1>Dein Profil</h1></div>
+        <article class="profile-card">
+          <div class="profile-avatar">AM</div><h2>Anna Meyer</h2><p>Mitglied seit Januar 2022</p>
+          <dl><div><dt>Mitgliedsnummer</dt><dd>4711</dd></div><div><dt>E-Mail</dt><dd>anna@example.de</dd></div><div><dt>Status</dt><dd><span class="tag green">Aktiv</span></dd></div><div><dt>Vertragsende</dt><dd>31.12.2027</dd></div></dl>
+        </article>
+        <button class="settings-row"><span>▣</span><div><strong>Registrierte Geräte</strong><small>1 vertrauenswürdiges Gerät</small></div><b>›</b></button>
+        <button class="settings-row"><span>♢</span><div><strong>Datenschutz & Daten</strong><small>Speicherfrist und Export</small></div><b>›</b></button>
+        <button class="secondary" id="showStaff">Betreiber-Demo öffnen</button>
+      </section>
+
+      <section class="view staff-view" id="staff">
+        <div class="staff-header">
+          <div><p class="eyebrow">Betreiberbereich</p><h1>Guten Abend, Mia.</h1></div>
+          <span class="role-pill">Mitarbeiterin</span>
+        </div>
+        <div class="metric-grid">
+          <article class="metric dark"><span>LIVE</span><strong id="liveCount">37</strong><p>Mitglieder<br>im Studio</p></article>
+          <article class="metric"><span>HEUTE</span><strong>128</strong><p>Besuche<br>insgesamt</p></article>
+          <article class="metric"><span>OFFEN</span><strong>3</strong><p>Klärungen<br>notwendig</p></article>
+        </div>
+        <div class="section-title staff-title"><div><p class="eyebrow">Live</p><h3>Aktuell im Studio</h3></div><button data-go="attendance">Alle 37</button></div>
+        <label class="search"><span>⌕</span><input type="search" placeholder="Mitglied suchen..." id="staffSearch"></label>
+        <div class="people-list" id="peopleList"></div>
+        <button class="incident-button" id="newIncident"><span>!</span><div><strong>Vorfall dokumentieren</strong><small>Zeitraum erfassen und Anwesenheit auswerten</small></div><b>›</b></button>
+      </section>
+
+      <section class="view staff-view" id="attendance">
+        <div class="page-heading"><p class="eyebrow">Live-Anwesenheit</p><h1>37 Mitglieder</h1><p>Stand: gerade eben · FITNESS PARK in Hemmingen</p></div>
+        <label class="search"><span>⌕</span><input type="search" placeholder="Name oder Mitgliedsnummer" id="attendanceSearch"></label>
+        <div class="filter-row"><button class="active">Alle</button><button>Über 2 Std.</button><button>Markiert</button></div>
+        <div class="people-list" id="attendanceList"></div>
+      </section>
+
+      <section class="view staff-view" id="incidents">
+        <div class="page-heading"><p class="eyebrow">Dokumentation</p><h1>Vorfälle</h1><p>Neutrale zeitliche Einordnung ohne automatische Bewertung von Personen.</p></div>
+        <button class="primary compact" id="newIncident2">+ Neuen Vorfall anlegen</button>
+        <article class="incident-card"><div><span class="tag red">Gesperrt</span><span class="case-id">INC-2026-004</span></div><h3>Diebstahl · Umkleide Herren</h3><p>24.07.2026 · 18:30–19:15 Uhr</p><div class="case-stats"><span><strong>18</strong> registriert</span><span><strong>7</strong> möglicherweise</span></div><button id="viewIncident">Auswertung öffnen →</button></article>
+        <article class="incident-card"><div><span class="tag gray">Geschlossen</span><span class="case-id">INC-2026-003</span></div><h3>Sachbeschädigung · Trainingsfläche</h3><p>14.07.2026 · 20:10–20:30 Uhr</p><button>Details öffnen →</button></article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="memberNav">
+      <button class="active" data-go="home"><span>⌂</span>Start</button>
+      <button data-go="history"><span>◷</span>Besuche</button>
+      <button data-go="profile"><span>○</span>Profil</button>
+    </nav>
+    <nav class="bottom-nav hidden" id="staffNav">
+      <button class="active" data-go="staff"><span>⌂</span>Übersicht</button>
+      <button data-go="attendance"><span>◉</span>Anwesend</button>
+      <button data-go="incidents"><span>!</span>Vorfälle</button>
+      <button id="backToMember"><span>○</span>Anna</button>
+    </nav>
+  </div>
+
+  <dialog id="scannerDialog">
+    <div class="dialog-card scanner-card">
+      <button class="dialog-close" data-close="scannerDialog">×</button>
+      <p class="eyebrow">Check-in</p><h2>Studio-Code scannen</h2>
+      <div class="scanner"><div class="scan-corners"></div><div class="scan-line"></div><span>⌗</span></div>
+      <p>Halte den QR-Code im markierten Bereich. Der Code hängt direkt am Eingang.</p>
+      <button class="primary" id="simulateScan">Demo-Code scannen</button>
+      <small>Die Kamera wird nur für diesen Scan verwendet.</small>
+    </div>
+  </dialog>
+
+  <dialog id="checkoutDialog">
+    <form class="dialog-card" method="dialog" id="checkoutForm">
+      <button class="dialog-close" data-close="checkoutDialog" type="button">×</button>
+      <div class="confirm-icon">✓</div><p class="eyebrow">Besuch beenden</p><h2>Jetzt auschecken?</h2>
+      <p>Deine Check-out-Zeit wird sicher mit der aktuellen Serverzeit gespeichert.</p>
+      <button class="primary" value="confirm">Ja, jetzt auschecken</button>
+      <button class="secondary" type="button" data-close="checkoutDialog">Abbrechen</button>
+    </form>
+  </dialog>
+
+  <dialog id="incidentDialog">
+    <form class="dialog-card incident-form" id="incidentForm">
+      <button class="dialog-close" data-close="incidentDialog" type="button">×</button>
+      <p class="eyebrow">Neuer Vorfall</p><h2>Zeitraum erfassen</h2>
+      <label>Art des Vorfalls<select required><option>Diebstahl</option><option>Sachbeschädigung</option><option>Streit</option><option>Unfall</option><option>Sonstiger Vorfall</option></select></label>
+      <div class="form-grid"><label>Datum<input type="date" value="2026-07-27" required></label><label>Bereich<select><option>Umkleide</option><option>Trainingsfläche</option><option>Empfang</option></select></label></div>
+      <div class="form-grid"><label>Beginn<input type="time" value="19:00" required></label><label>Ende<input type="time" value="19:30" required></label></div>
+      <label>Beschreibung<textarea placeholder="Sachlich beschreiben, was gemeldet wurde..." required></textarea></label>
+      <button class="primary">Vorfall anlegen & auswerten</button>
+    </form>
+  </dialog>
+
+  <dialog id="resultDialog">
+    <div class="dialog-card result-card">
+      <button class="dialog-close" data-close="resultDialog">×</button>
+      <p class="eyebrow">INC-2026-004 · Gesperrt</p><h2>Zeitliche Auswertung</h2>
+      <div class="time-window"><strong>24. Juli · 18:30–19:15</strong><span>inkl. 15 Min. Toleranz</span></div>
+      <div class="result-group"><header><span class="dot green-dot"></span><strong>Im Zeitraum registriert</strong><b>18</b></header><p>Regulärer Check-out nach Beginn des Vorfalls.</p></div>
+      <div class="result-group"><header><span class="dot orange-dot"></span><strong>Möglicherweise anwesend</strong><b>7</b></header><p>Automatisch geschlossen oder Austrittszeit nachträglich gemeldet.</p></div>
+      <div class="result-group"><header><span class="dot gray-dot"></span><strong>Außerhalb des Zeitraums</strong><b>103</b></header><p>Regulär vorher ausgecheckt oder erst danach eingecheckt.</p></div>
+      <p class="legal-note">Diese Einordnung ist keine Bewertung oder Beschuldigung. Sie bildet ausschließlich dokumentierte Zeiten ab.</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
