@@ -11,10 +11,24 @@ let adminQrPayload = "";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const qrPrefix = "fitness-park-hemmingen|checkin|";
+const member = { name: "Anna Meyer", initials: "AM", number: "4711" };
+const storageKeys = {
+  activeVisit: "fitnessParkActiveVisit",
+  visits: "fitnessParkVisits",
+  log: "fitnessParkSystemLog"
+};
+const demoVisits = [
+  { start: "2026-07-26T18:42:00", end: "2026-07-26T20:06:00", status: "Regulär" },
+  { start: "2026-07-24T17:30:00", end: "2026-07-24T19:40:00", status: "Nachgetragen" },
+  { start: "2026-07-22T18:10:00", end: "2026-07-22T23:00:00", status: "Automatisch" },
+  { start: "2026-07-20T08:12:00", end: "2026-07-20T09:28:00", status: "Regulär" }
+];
 
 function initialsList(target, filter = "") {
   const normalized = filter.trim().toLowerCase();
-  const rows = people.filter(([name]) => name.toLowerCase().includes(normalized));
+  const active = loadActiveVisit();
+  const realRows = active ? [[member.name, member.initials, formatTime(active.start), durationText(new Date(active.start), new Date())]] : [];
+  const rows = [...realRows, ...people].filter(([name]) => name.toLowerCase().includes(normalized));
   target.innerHTML = rows.map(([name, initials, time, duration]) => `
     <article class="person">
       <div class="person-avatar">${initials}</div>
@@ -39,6 +53,99 @@ function toast(message) {
   el.classList.add("show");
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => el.classList.remove("show"), 2800);
+}
+
+function readJson(key, fallback) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function writeJson(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function loadVisits() {
+  return readJson(storageKeys.visits, []);
+}
+
+function saveVisits(visits) {
+  writeJson(storageKeys.visits, visits);
+}
+
+function loadActiveVisit() {
+  return readJson(storageKeys.activeVisit, null);
+}
+
+function saveActiveVisit(visit) {
+  if (visit) writeJson(storageKeys.activeVisit, visit);
+  else localStorage.removeItem(storageKeys.activeVisit);
+}
+
+function addSystemLog(type, message) {
+  const log = readJson(storageKeys.log, []);
+  log.unshift({ id: crypto.randomUUID(), type, message, at: new Date().toISOString() });
+  writeJson(storageKeys.log, log.slice(0, 50));
+}
+
+function formatTime(value) {
+  return new Date(value).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDateTile(value) {
+  const date = new Date(value);
+  return {
+    day: date.toLocaleDateString("de-DE", { day: "2-digit" }),
+    month: date.toLocaleDateString("de-DE", { month: "short" }).replace(".", "").toUpperCase()
+  };
+}
+
+function durationText(start, end = new Date()) {
+  const minutes = Math.max(1, Math.round((end - start) / 60000));
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return hours ? `${hours} h ${String(rest).padStart(2, "0")}` : `${rest} Min.`;
+}
+
+function visitRow(visit, tag = "Regulär") {
+  const tile = formatDateTile(visit.start);
+  const start = formatTime(visit.start);
+  const end = visit.end ? formatTime(visit.end) : "läuft";
+  const duration = visit.end ? durationText(new Date(visit.start), new Date(visit.end)) : durationText(new Date(visit.start));
+  const tagClass = visit.end ? "green" : "orange";
+  return `<article><div class="date-tile"><strong>${tile.day}</strong><span>${tile.month}</span></div><div><strong>${start} – ${end} Uhr</strong><span>${duration}</span></div><span class="tag ${tagClass}">${tag}</span></article>`;
+}
+
+function operatorVisitRow(visit) {
+  const end = visit.end ? `${formatTime(visit.end)} Uhr` : "läuft gerade";
+  const duration = visit.end ? durationText(new Date(visit.start), new Date(visit.end)) : durationText(new Date(visit.start));
+  return `<article class="visit-log-row"><div><strong>${member.name}</strong><span>${formatTime(visit.start)} Uhr – ${end}</span></div><b>${duration}</b></article>`;
+}
+
+function renderLogs() {
+  const realVisits = loadVisits();
+  const active = loadActiveVisit();
+  const allVisits = [...(active ? [active] : []), ...realVisits];
+  const historyList = $("#historyList");
+  historyList.innerHTML = [
+    ...allVisits.map((visit) => visitRow(visit, visit.end ? "Echt" : "Aktiv")),
+    ...demoVisits.map((visit) => visitRow(visit, visit.status))
+  ].join("");
+
+  const latest = allVisits[0] || demoVisits[0];
+  $("#lastVisitRow").outerHTML = `<article class="visit-row" id="lastVisitRow">${visitRow(latest, latest.end ? "Echt" : "Aktiv").replace(/^<article>|<\/article>$/g, "")}<span class="visit-duration">${latest.end ? durationText(new Date(latest.start), new Date(latest.end)) : "läuft"}</span></article>`;
+
+  const operatorRows = allVisits.map(operatorVisitRow);
+  $("#operatorVisitList").innerHTML = operatorRows.length ? operatorRows.join("") : `<article class="visit-log-row"><div><strong>Noch keine echten Besuche</strong><span>Demo-Besuche bleiben oben sichtbar.</span></div></article>`;
+  $("#liveCount").textContent = String(37 + (active ? 1 : 0));
+  $("#todayCount").textContent = String(128 + realVisits.filter((visit) => new Date(visit.start).toDateString() === new Date().toDateString()).length);
+
+  const log = readJson(storageKeys.log, []);
+  $("#systemLogList").innerHTML = log.length ? log.map((entry) => `<article><span>${formatTime(entry.at)}</span><strong>${entry.type}</strong><p>${entry.message}</p></article>`).join("") : `<article><span>System</span><strong>Keine echten Ereignisse</strong><p>Check-ins und Check-outs erscheinen hier automatisch.</p></article>`;
+  initialsList($("#peopleList"), $("#staffSearch").value);
+  initialsList($("#attendanceList"), $("#attendanceSearch").value);
 }
 
 function generateQrPayload() {
@@ -75,7 +182,17 @@ function finishQrCheckIn(value) {
   }
   stopQrScanner();
   $("#scannerDialog").close();
+  const activeVisit = {
+    id: crypto.randomUUID(),
+    memberName: member.name,
+    memberNumber: member.number,
+    start: new Date().toISOString(),
+    source: "qr"
+  };
+  saveActiveVisit(activeVisit);
+  addSystemLog("Check-in", `${member.name} hat per QR-Code eingecheckt.`);
   setCheckedIn(true);
+  renderLogs();
   toast("Check-in per QR-Code erfolgreich");
 }
 
@@ -168,7 +285,15 @@ $("#simulateScan").addEventListener("click", () => {
 $("#checkoutForm").addEventListener("submit", (event) => {
   event.preventDefault();
   $("#checkoutDialog").close();
+  const activeVisit = loadActiveVisit();
+  if (activeVisit) {
+    const completedVisit = { ...activeVisit, end: new Date().toISOString() };
+    saveVisits([completedVisit, ...loadVisits()].slice(0, 30));
+    saveActiveVisit(null);
+    addSystemLog("Check-out", `${member.name} hat ausgecheckt. Dauer: ${durationText(new Date(completedVisit.start), new Date(completedVisit.end))}`);
+  }
   setCheckedIn(false);
+  renderLogs();
   toast("Check-out erfolgreich · Besuchsdauer gespeichert");
 });
 $("#problemButton").addEventListener("click", () => toast("Das Studio-Team wurde über dein Problem informiert."));
@@ -193,8 +318,12 @@ $$(".filter-row button").forEach((button) => button.addEventListener("click", ()
   toast(`Filter „${button.textContent}“ aktiv`);
 }));
 
-initialsList($("#peopleList"));
-initialsList($("#attendanceList"));
 renderAdminQr();
+const restoredVisit = loadActiveVisit();
+if (restoredVisit) {
+  setCheckedIn(true);
+  checkInAt = new Date(restoredVisit.start);
+}
+renderLogs();
 setInterval(updateDuration, 1000);
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));

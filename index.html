@@ -68,7 +68,7 @@
             <div><p class="eyebrow">Zuletzt</p><h3>Dein letzter Besuch</h3></div>
             <button data-go="history">Alle anzeigen</button>
           </div>
-          <article class="visit-row">
+          <article class="visit-row" id="lastVisitRow">
             <div class="date-tile"><strong>24</strong><span>JUL</span></div>
             <div><strong>Freitagabend</strong><span>17:42 – 19:03 Uhr</span></div>
             <span class="visit-duration">1 h 21</span>
@@ -84,7 +84,7 @@
       <section class="view" id="history">
         <div class="page-heading"><p class="eyebrow">Dein Verlauf</p><h1>Besuche</h1><p>Nur du und berechtigte Studio-Mitarbeiter können diese Daten sehen.</p></div>
         <div class="month-control"><button>‹</button><strong>Juli 2026</strong><button>›</button></div>
-        <div class="history-list">
+        <div class="history-list" id="historyList">
           <article><div class="date-tile"><strong>26</strong><span>JUL</span></div><div><strong>18:42 – 20:06 Uhr</strong><span>1 h 24 Min.</span></div><span class="tag green">Regulär</span></article>
           <article><div class="date-tile"><strong>24</strong><span>JUL</span></div><div><strong>17:30 – 19:40 Uhr</strong><span>2 h 10 Min.</span></div><span class="tag orange">Nachgetragen</span></article>
           <article><div class="date-tile"><strong>22</strong><span>JUL</span></div><div><strong>18:10 – 23:00 Uhr</strong><span>Kein regulärer Check-out</span></div><span class="tag orange">Automatisch</span></article>
@@ -108,12 +108,14 @@
         </div>
         <div class="metric-grid">
           <article class="metric dark"><span>LIVE</span><strong id="liveCount">37</strong><p>Mitglieder<br>im Studio</p></article>
-          <article class="metric"><span>HEUTE</span><strong>128</strong><p>Besuche<br>insgesamt</p></article>
+          <article class="metric"><span>HEUTE</span><strong id="todayCount">128</strong><p>Besuche<br>insgesamt</p></article>
           <article class="metric"><span>OFFEN</span><strong>3</strong><p>Klärungen<br>notwendig</p></article>
         </div>
         <div class="section-title staff-title"><div><p class="eyebrow">Live</p><h3>Aktuell im Studio</h3></div><button data-go="attendance">Alle 37</button></div>
         <label class="search"><span>⌕</span><input type="search" placeholder="Mitglied suchen..." id="staffSearch"></label>
         <div class="people-list" id="peopleList"></div>
+        <div class="section-title staff-title"><div><p class="eyebrow">Protokoll</p><h3>Echte Besuche</h3></div></div>
+        <div class="visit-log-list" id="operatorVisitList"></div>
         <button class="incident-button" id="newIncident"><span>!</span><div><strong>Vorfall dokumentieren</strong><small>Zeitraum erfassen und Anwesenheit auswerten</small></div><b>›</b></button>
       </section>
 
@@ -160,6 +162,7 @@
         </article>
         <button class="settings-row"><span>*</span><div><strong>Rollen verwalten</strong><small>Adminrechte, Betreiberzugang, Sperren</small></div><b>›</b></button>
         <button class="settings-row"><span>i</span><div><strong>Systemprotokoll</strong><small>Technische Ereignisse und Exporte</small></div><b>›</b></button>
+        <div class="system-log-list" id="systemLogList"></div>
       </section>
     </main>
 
