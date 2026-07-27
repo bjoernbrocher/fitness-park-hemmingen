@@ -99,9 +99,7 @@
           <dl><div><dt>Mitgliedsnummer</dt><dd>4711</dd></div><div><dt>E-Mail</dt><dd>anna@example.de</dd></div><div><dt>Status</dt><dd><span class="tag green">Aktiv</span></dd></div><div><dt>Vertragsende</dt><dd>31.12.2027</dd></div></dl>
         </article>
         <button class="settings-row"><span>▣</span><div><strong>Registrierte Geräte</strong><small>1 vertrauenswürdiges Gerät</small></div><b>›</b></button>
-        <button class="settings-row"><span>♢</span><div><strong>Datenschutz & Daten</strong><small>Speicherfrist und Export</small></div><b>›</b></button>
-        <button class="secondary" id="showStaff">Betreiber-Demo öffnen</button>
-      </section>
+        <button class="settings-row"><span>♢</span><div><strong>Datenschutz & Daten</strong><small>Speicherfrist und Export</small></div><b>›</b></button>      </section>
 
       <section class="view staff-view" id="staff">
         <div class="staff-header">
@@ -132,18 +130,35 @@
         <article class="incident-card"><div><span class="tag red">Gesperrt</span><span class="case-id">INC-2026-004</span></div><h3>Diebstahl · Umkleide Herren</h3><p>24.07.2026 · 18:30–19:15 Uhr</p><div class="case-stats"><span><strong>18</strong> registriert</span><span><strong>7</strong> möglicherweise</span></div><button id="viewIncident">Auswertung öffnen →</button></article>
         <article class="incident-card"><div><span class="tag gray">Geschlossen</span><span class="case-id">INC-2026-003</span></div><h3>Sachbeschädigung · Trainingsfläche</h3><p>14.07.2026 · 20:10–20:30 Uhr</p><button>Details öffnen →</button></article>
       </section>
+
+      <section class="view admin-view" id="admin">
+        <div class="staff-header">
+          <div><p class="eyebrow">Administration</p><h1>System & Rechte</h1></div>
+          <span class="role-pill admin-pill">Admin</span>
+        </div>
+        <article class="admin-panel">
+          <div>
+            <span class="admin-icon">#</span>
+            <div><p class="eyebrow">Demo-Modus</p><h2>Admin ist getrennt vom Betreiber.</h2></div>
+          </div>
+          <p>Hier liegen später Studio-Konfiguration, Rollen, Datenschutzfristen und technische Freigaben. Mitglieder- und Betreiberansicht bleiben davon unberührt.</p>
+        </article>
+        <div class="admin-grid">
+          <article><span>Rollen</span><strong>3</strong><p>Mitglied, Betreiber, Admin</p></article>
+          <article><span>Geräte</span><strong>1</strong><p>vertrauenswürdig</p></article>
+          <article><span>Export</span><strong>30 T.</strong><p>Speicherfrist Demo</p></article>
+        </div>
+        <button class="settings-row"><span>*</span><div><strong>Rollen verwalten</strong><small>Adminrechte, Betreiberzugang, Sperren</small></div><b>›</b></button>
+        <button class="settings-row"><span>i</span><div><strong>Systemprotokoll</strong><small>Technische Ereignisse und Exporte</small></div><b>›</b></button>
+      </section>
     </main>
 
     <nav class="bottom-nav" id="memberNav">
       <button class="active" data-go="home"><span>⌂</span>Start</button>
       <button data-go="history"><span>◷</span>Besuche</button>
       <button data-go="profile"><span>○</span>Profil</button>
-    </nav>
-    <nav class="bottom-nav hidden" id="staffNav">
-      <button class="active" data-go="staff"><span>⌂</span>Übersicht</button>
-      <button data-go="attendance"><span>◉</span>Anwesend</button>
-      <button data-go="incidents"><span>!</span>Vorfälle</button>
-      <button id="backToMember"><span>○</span>Anna</button>
+      <button data-go="staff" data-nav-group="staff"><span>◉</span>Betreiber</button>
+      <button data-go="admin"><span>#</span>Admin</button>
     </nav>
   </div>
 

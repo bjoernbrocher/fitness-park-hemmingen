@@ -5,7 +5,6 @@ const people = [
 ];
 let checkedIn = false;
 let checkInAt = null;
-let staffMode = false;
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 
@@ -22,10 +21,11 @@ function initialsList(target, filter = "") {
 
 function go(view) {
   $$(".view").forEach((item) => item.classList.toggle("active", item.id === view));
-  const staffView = ["staff","attendance","incidents"].includes(view);
-  $("#memberNav").classList.toggle("hidden", staffView);
-  $("#staffNav").classList.toggle("hidden", !staffView);
-  $$(".bottom-nav button[data-go]").forEach((button) => button.classList.toggle("active", button.dataset.go === view));
+  const activeGroup = ["staff","attendance","incidents"].includes(view) ? "staff" : view;
+  $$(".bottom-nav button[data-go]").forEach((button) => {
+    const target = button.dataset.navGroup || button.dataset.go;
+    button.classList.toggle("active", target === activeGroup);
+  });
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -75,9 +75,7 @@ $("#checkoutForm").addEventListener("submit", (event) => {
   toast("Check-out erfolgreich · Besuchsdauer gespeichert");
 });
 $("#problemButton").addEventListener("click", () => toast("Das Studio-Team wurde über dein Problem informiert."));
-$("#showStaff").addEventListener("click", () => { staffMode = true; go("staff"); });
-$("#backToMember").addEventListener("click", () => { staffMode = false; go("home"); });
-$("#roleToggle").addEventListener("click", () => staffMode ? go("home") : go("staff"));
+$("#roleToggle").addEventListener("click", () => go("profile"));
 ["#newIncident","#newIncident2"].forEach((id) => $(id).addEventListener("click", () => $("#incidentDialog").showModal()));
 $("#viewIncident").addEventListener("click", () => $("#resultDialog").showModal());
 $("#incidentForm").addEventListener("submit", (event) => {
