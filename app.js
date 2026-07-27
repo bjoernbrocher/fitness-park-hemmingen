@@ -82,25 +82,37 @@ function finishQrCheckIn(value) {
 async function startQrScanner() {
   $("#scanStatus").textContent = "Kamera wird gestartet...";
   $("#cameraPlaceholder").classList.remove("hidden");
-  if (!("BarcodeDetector" in window)) {
-    $("#scanStatus").textContent = "Dieser Browser erkennt QR-Codes nicht direkt. Nutze fuer die Demo den Fallback-Button.";
-    return;
-  }
   try {
-    const detector = new BarcodeDetector({ formats: ["qr_code"] });
     scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     const video = $("#qrVideo");
     video.srcObject = scanStream;
     await video.play();
     $("#cameraPlaceholder").classList.add("hidden");
     $("#scanStatus").textContent = "Suche QR-Code...";
+    const detector = "BarcodeDetector" in window ? new BarcodeDetector({ formats: ["qr_code"] }) : null;
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d", { willReadFrequently: true });
     const scan = async () => {
       if (!scanStream) return;
       try {
-        const codes = await detector.detect(video);
-        if (codes.length) {
-          finishQrCheckIn(codes[0].rawValue);
-          return;
+        if (detector) {
+          const codes = await detector.detect(video);
+          if (codes.length) {
+            finishQrCheckIn(codes[0].rawValue);
+            return;
+          }
+        } else if (window.jsQR && video.videoWidth && video.videoHeight) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const image = context.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(image.data, image.width, image.height);
+          if (code?.data) {
+            finishQrCheckIn(code.data);
+            return;
+          }
+        } else if (!window.jsQR) {
+          $("#scanStatus").textContent = "Kamera aktiv. QR-Erkennung wird in diesem Browser nicht geladen.";
         }
       } catch (error) {
         $("#scanStatus").textContent = "QR-Code konnte noch nicht gelesen werden.";

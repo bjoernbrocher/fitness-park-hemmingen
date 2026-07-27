@@ -1,5 +1,5 @@
-const CACHE = "pulse-studio-v1";
-const ASSETS = ["./","./index.html","./style.css?v=1","./app.js?v=1","./manifest.webmanifest"];
+const CACHE = "pulse-studio-v2";
+const ASSETS = ["./","./index.html","./style.css?v=1","./app.js?v=2","./manifest.webmanifest"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener("fetch", event => {
