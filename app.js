@@ -12,7 +12,7 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const qrPrefix = "fitness-park-hemmingen|checkin|";
 const supabaseConfig = {
-  url: "https://kyjcbmwzcxbymbcuwtfw.supabase.com",
+  url: "https://kyjcbmwzcxbymbcuwtfw.supabase.co",
   key: "sb_publishable__hA3dloiAmPSDNqknW4GlA_NFXxTF11"
 };
 let remoteReady = false;
