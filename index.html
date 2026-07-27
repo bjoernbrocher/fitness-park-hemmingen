@@ -148,6 +148,16 @@
           <article><span>Geräte</span><strong>1</strong><p>vertrauenswürdig</p></article>
           <article><span>Export</span><strong>30 T.</strong><p>Speicherfrist Demo</p></article>
         </div>
+        <article class="qr-admin-card">
+          <div>
+            <p class="eyebrow">Studio Check-in</p>
+            <h2>QR-Code am Eingang</h2>
+            <p>Dieser Code ist der getrennte Admin-Teil: Mitglieder scannen ihn mit der Kamera und werden danach eingecheckt.</p>
+          </div>
+          <div class="qr-frame"><img id="adminQrCode" alt="Check-in QR-Code"></div>
+          <code id="adminQrPayload"></code>
+          <button class="primary compact" id="refreshQr" type="button">QR-Code erneuern</button>
+        </article>
         <button class="settings-row"><span>*</span><div><strong>Rollen verwalten</strong><small>Adminrechte, Betreiberzugang, Sperren</small></div><b>›</b></button>
         <button class="settings-row"><span>i</span><div><strong>Systemprotokoll</strong><small>Technische Ereignisse und Exporte</small></div><b>›</b></button>
       </section>
@@ -166,10 +176,15 @@
     <div class="dialog-card scanner-card">
       <button class="dialog-close" data-close="scannerDialog">×</button>
       <p class="eyebrow">Check-in</p><h2>Studio-Code scannen</h2>
-      <div class="scanner"><div class="scan-corners"></div><div class="scan-line"></div><span>⌗</span></div>
-      <p>Halte den QR-Code im markierten Bereich. Der Code hängt direkt am Eingang.</p>
-      <button class="primary" id="simulateScan">Demo-Code scannen</button>
-      <small>Die Kamera wird nur für diesen Scan verwendet.</small>
+      <div class="scanner">
+        <video id="qrVideo" autoplay muted playsinline></video>
+        <div class="scan-corners"></div>
+        <div class="scan-line"></div>
+        <span id="cameraPlaceholder">⌗</span>
+      </div>
+      <p id="scanStatus">Halte den Admin-QR-Code in den Rahmen.</p>
+      <button class="secondary" id="simulateScan" type="button">Demo-Code verwenden</button>
+      <small>Die Kamera wird nur für diesen Scan verwendet und nach dem Check-in wieder beendet.</small>
     </div>
   </dialog>
 

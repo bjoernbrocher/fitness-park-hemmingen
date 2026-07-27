@@ -5,8 +5,12 @@ const people = [
 ];
 let checkedIn = false;
 let checkInAt = null;
+let scanStream = null;
+let scanTimer = null;
+let adminQrPayload = "";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
+const qrPrefix = "fitness-park-hemmingen|checkin|";
 
 function initialsList(target, filter = "") {
   const normalized = filter.trim().toLowerCase();
@@ -37,6 +41,78 @@ function toast(message) {
   toast.timer = setTimeout(() => el.classList.remove("show"), 2800);
 }
 
+function generateQrPayload() {
+  const token = crypto.getRandomValues(new Uint32Array(2));
+  adminQrPayload = `${qrPrefix}${Date.now()}-${token[0].toString(36)}${token[1].toString(36)}`;
+  return adminQrPayload;
+}
+
+function renderAdminQr() {
+  const payload = generateQrPayload();
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=14&data=${encodeURIComponent(payload)}`;
+  $("#adminQrCode").src = url;
+  $("#adminQrPayload").textContent = payload;
+}
+
+function validStudioQr(value) {
+  return typeof value === "string" && value.startsWith(qrPrefix);
+}
+
+function stopQrScanner() {
+  clearTimeout(scanTimer);
+  scanTimer = null;
+  if (scanStream) {
+    scanStream.getTracks().forEach((track) => track.stop());
+    scanStream = null;
+  }
+  $("#qrVideo").srcObject = null;
+}
+
+function finishQrCheckIn(value) {
+  if (!validStudioQr(value)) {
+    $("#scanStatus").textContent = "Das ist kein FITNESS PARK Check-in-Code.";
+    return;
+  }
+  stopQrScanner();
+  $("#scannerDialog").close();
+  setCheckedIn(true);
+  toast("Check-in per QR-Code erfolgreich");
+}
+
+async function startQrScanner() {
+  $("#scanStatus").textContent = "Kamera wird gestartet...";
+  $("#cameraPlaceholder").classList.remove("hidden");
+  if (!("BarcodeDetector" in window)) {
+    $("#scanStatus").textContent = "Dieser Browser erkennt QR-Codes nicht direkt. Nutze fuer die Demo den Fallback-Button.";
+    return;
+  }
+  try {
+    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    const video = $("#qrVideo");
+    video.srcObject = scanStream;
+    await video.play();
+    $("#cameraPlaceholder").classList.add("hidden");
+    $("#scanStatus").textContent = "Suche QR-Code...";
+    const scan = async () => {
+      if (!scanStream) return;
+      try {
+        const codes = await detector.detect(video);
+        if (codes.length) {
+          finishQrCheckIn(codes[0].rawValue);
+          return;
+        }
+      } catch (error) {
+        $("#scanStatus").textContent = "QR-Code konnte noch nicht gelesen werden.";
+      }
+      scanTimer = setTimeout(scan, 350);
+    };
+    scan();
+  } catch (error) {
+    $("#scanStatus").textContent = "Kamera konnte nicht gestartet werden. Bitte Berechtigung pruefen.";
+  }
+}
+
 function setCheckedIn(value) {
   checkedIn = value;
   const card = $("#statusCard");
@@ -61,12 +137,21 @@ function updateDuration() {
 }
 
 $$("[data-go]").forEach((button) => button.addEventListener("click", () => go(button.dataset.go)));
-$$("[data-close]").forEach((button) => button.addEventListener("click", () => $(`#${button.dataset.close}`).close()));
-$("#checkAction").addEventListener("click", () => $(checkedIn ? "#checkoutDialog" : "#scannerDialog").showModal());
+$$("[data-close]").forEach((button) => button.addEventListener("click", () => {
+  if (button.dataset.close === "scannerDialog") stopQrScanner();
+  $(`#${button.dataset.close}`).close();
+}));
+$("#scannerDialog").addEventListener("close", stopQrScanner);
+$("#checkAction").addEventListener("click", () => {
+  if (checkedIn) {
+    $("#checkoutDialog").showModal();
+  } else {
+    $("#scannerDialog").showModal();
+    startQrScanner();
+  }
+});
 $("#simulateScan").addEventListener("click", () => {
-  $("#scannerDialog").close();
-  setCheckedIn(true);
-  toast("Check-in erfolgreich · Serverzeit 19:29 Uhr");
+  finishQrCheckIn(adminQrPayload || generateQrPayload());
 });
 $("#checkoutForm").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -76,6 +161,10 @@ $("#checkoutForm").addEventListener("submit", (event) => {
 });
 $("#problemButton").addEventListener("click", () => toast("Das Studio-Team wurde über dein Problem informiert."));
 $("#roleToggle").addEventListener("click", () => go("profile"));
+$("#refreshQr").addEventListener("click", () => {
+  renderAdminQr();
+  toast("Neuer Check-in-QR-Code erzeugt");
+});
 ["#newIncident","#newIncident2"].forEach((id) => $(id).addEventListener("click", () => $("#incidentDialog").showModal()));
 $("#viewIncident").addEventListener("click", () => $("#resultDialog").showModal());
 $("#incidentForm").addEventListener("submit", (event) => {
@@ -94,5 +183,6 @@ $$(".filter-row button").forEach((button) => button.addEventListener("click", ()
 
 initialsList($("#peopleList"));
 initialsList($("#attendanceList"));
+renderAdminQr();
 setInterval(updateDuration, 1000);
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
