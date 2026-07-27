@@ -15,14 +15,30 @@ create table if not exists public.fitness_system_log (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.fitness_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  initials text not null,
+  member_number text not null unique,
+  email text,
+  device_label text,
+  status text not null default 'active',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.fitness_visits enable row level security;
 alter table public.fitness_system_log enable row level security;
+alter table public.fitness_members enable row level security;
 
 drop policy if exists "fitness visits demo read" on public.fitness_visits;
 drop policy if exists "fitness visits demo insert" on public.fitness_visits;
 drop policy if exists "fitness visits demo update" on public.fitness_visits;
 drop policy if exists "fitness log demo read" on public.fitness_system_log;
 drop policy if exists "fitness log demo insert" on public.fitness_system_log;
+drop policy if exists "fitness members demo read" on public.fitness_members;
+drop policy if exists "fitness members demo insert" on public.fitness_members;
+drop policy if exists "fitness members demo update" on public.fitness_members;
 
 create policy "fitness visits demo read"
 on public.fitness_visits for select
@@ -50,6 +66,22 @@ on public.fitness_system_log for insert
 to anon, authenticated
 with check (true);
 
+create policy "fitness members demo read"
+on public.fitness_members for select
+to anon, authenticated
+using (true);
+
+create policy "fitness members demo insert"
+on public.fitness_members for insert
+to anon, authenticated
+with check (true);
+
+create policy "fitness members demo update"
+on public.fitness_members for update
+to anon, authenticated
+using (true)
+with check (true);
+
 create index if not exists fitness_visits_started_at_idx
 on public.fitness_visits (started_at desc);
 
@@ -58,3 +90,6 @@ on public.fitness_visits (member_number, ended_at);
 
 create index if not exists fitness_system_log_created_at_idx
 on public.fitness_system_log (created_at desc);
+
+create index if not exists fitness_members_member_number_idx
+on public.fitness_members (member_number);

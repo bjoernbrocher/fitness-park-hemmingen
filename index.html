@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <div class="app-shell">
@@ -36,11 +36,25 @@
     </header>
 
     <main>
+      <section class="view" id="register">
+        <div class="page-heading"><p class="eyebrow">Einladung erkannt</p><h1>App verknüpfen</h1><p>Einmal Mitgliedsnummer eintragen. Danach bleibt dieses Gerät für den Check-in vorbereitet.</p></div>
+        <form class="register-card" id="registerForm">
+          <label>Name<input id="registerName" name="name" autocomplete="name" placeholder="Anna Meyer" required></label>
+          <label>Mitgliedsnummer<input id="registerNumber" name="memberNumber" inputmode="numeric" autocomplete="off" placeholder="4711" required></label>
+          <label>E-Mail <span>optional</span><input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="anna@example.de"></label>
+          <button class="primary" type="submit">Dieses Gerät verknüpfen</button>
+        </form>
+        <article class="privacy-note">
+          <span>◇</span>
+          <div><strong>Registrierung ohne Passwort.</strong><p>Der Einladungs-QR öffnet die App, die Mitgliedsnummer verbindet dieses Gerät mit dem Konto. Für die Demo bleiben Anna und Beispieldaten erhalten.</p></div>
+        </article>
+      </section>
+
       <section class="view active" id="home">
         <div class="member-hello">
           <div>
-            <p class="eyebrow">Montag, 27. Juli</p>
-            <h1>Hallo, Anna.</h1>
+            <p class="eyebrow" id="todayLabel">Montag, 27. Juli</p>
+            <h1 id="memberGreeting">Hallo, Anna.</h1>
           </div>
           <span class="open-pill"><i></i> Geöffnet bis 23:00</span>
         </div>
@@ -95,8 +109,8 @@
       <section class="view" id="profile">
         <div class="page-heading"><p class="eyebrow">Konto</p><h1>Dein Profil</h1></div>
         <article class="profile-card">
-          <div class="profile-avatar">AM</div><h2>Anna Meyer</h2><p>Mitglied seit Januar 2022</p>
-          <dl><div><dt>Mitgliedsnummer</dt><dd>4711</dd></div><div><dt>E-Mail</dt><dd>anna@example.de</dd></div><div><dt>Status</dt><dd><span class="tag green">Aktiv</span></dd></div><div><dt>Vertragsende</dt><dd>31.12.2027</dd></div></dl>
+          <div class="profile-avatar" id="profileAvatar">AM</div><h2 id="profileName">Anna Meyer</h2><p id="profileSince">Mitglied seit Januar 2022</p>
+          <dl><div><dt>Mitgliedsnummer</dt><dd id="profileNumber">4711</dd></div><div><dt>E-Mail</dt><dd id="profileEmail">anna@example.de</dd></div><div><dt>Status</dt><dd><span class="tag green" id="profileStatus">Aktiv</span></dd></div><div><dt>Vertragsende</dt><dd>31.12.2027</dd></div></dl>
         </article>
         <button class="settings-row"><span>▣</span><div><strong>Registrierte Geräte</strong><small>1 vertrauenswürdiges Gerät</small></div><b>›</b></button>
         <button class="settings-row"><span>♢</span><div><strong>Datenschutz & Daten</strong><small>Speicherfrist und Export</small></div><b>›</b></button>      </section>
@@ -116,6 +130,23 @@
         <div class="people-list" id="peopleList"></div>
         <div class="section-title staff-title"><div><p class="eyebrow">Protokoll</p><h3>Echte Besuche</h3></div></div>
         <div class="visit-log-list" id="operatorVisitList"></div>
+        <article class="qr-admin-card qr-staff-card">
+          <div>
+            <p class="eyebrow">QR-Codes</p>
+            <h2>Codes anzeigen</h2>
+            <p>Der Betreiber zeigt diese Codes am Empfang. Der Admin erzeugt sie im Adminbereich neu.</p>
+          </div>
+          <div class="qr-pair">
+            <div>
+              <h3>Check-in</h3>
+              <div class="qr-frame small"><img id="staffQrCode" alt="Check-in QR-Code"></div>
+            </div>
+            <div>
+              <h3>Einladung</h3>
+              <div class="qr-frame small"><img id="staffInviteQrCode" alt="Einladungs QR-Code"></div>
+            </div>
+          </div>
+        </article>
         <button class="incident-button" id="newIncident"><span>!</span><div><strong>Vorfall dokumentieren</strong><small>Zeitraum erfassen und Anwesenheit auswerten</small></div><b>›</b></button>
       </section>
 
@@ -159,6 +190,16 @@
           <div class="qr-frame"><img id="adminQrCode" alt="Check-in QR-Code"></div>
           <code id="adminQrPayload"></code>
           <button class="primary compact" id="refreshQr" type="button">QR-Code erneuern</button>
+        </article>
+        <article class="qr-admin-card">
+          <div>
+            <p class="eyebrow">Neue Mitglieder</p>
+            <h2>Einladungs-QR</h2>
+            <p>Neue Mitglieder scannen diesen Code beim ersten App-Aufruf. Danach tragen sie Name und Mitgliedsnummer ein.</p>
+          </div>
+          <div class="qr-frame"><img id="adminInviteQrCode" alt="Einladungs QR-Code"></div>
+          <code id="adminInvitePayload"></code>
+          <button class="primary compact" id="refreshInviteQr" type="button">Einladungs-QR erneuern</button>
         </article>
         <button class="settings-row"><span>*</span><div><strong>Rollen verwalten</strong><small>Adminrechte, Betreiberzugang, Sperren</small></div><b>›</b></button>
         <button class="settings-row"><span>i</span><div><strong>Systemprotokoll</strong><small>Technische Ereignisse und Exporte</small></div><b>›</b></button>
@@ -227,6 +268,6 @@
 
   <div class="toast" id="toast" role="status"></div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

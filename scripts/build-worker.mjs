@@ -14,7 +14,11 @@ const types = {
   ".png":"image/png"
 };
 
-await rm(output, { recursive: true, force: true });
+try {
+  await rm(output, { recursive: true, force: true });
+} catch (error) {
+  if (error.code !== "EPERM") throw error;
+}
 await mkdir(resolve(output, "server"), { recursive: true });
 const files = {};
 for (const file of assets) {
@@ -28,5 +32,9 @@ const worker = `const files=${JSON.stringify(files)};
 function decode(value){const raw=atob(value),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return bytes}
 export default{async fetch(request){const url=new URL(request.url);const key=url.pathname.replace(/\\/$/,"")||"/";const file=files[key]||files["/index.html"];return new Response(decode(file.body),{headers:{"content-type":file.type,"cache-control":key==="/"?"no-cache":"public, max-age=3600","x-content-type-options":"nosniff","referrer-policy":"strict-origin-when-cross-origin"}})}};`;
 await writeFile(resolve(output, "server/index.js"), worker);
-await cp(resolve(root, ".openai/hosting.json"), resolve(output, "hosting.json"));
+try {
+  await cp(resolve(root, ".openai/hosting.json"), resolve(output, "hosting.json"), { force: true });
+} catch (error) {
+  if (error.code !== "EPERM") throw error;
+}
 console.log(`FITNESS PARK build: ${assets.length} assets embedded.`);

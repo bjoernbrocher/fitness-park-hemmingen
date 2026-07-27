@@ -8,6 +8,7 @@ let checkInAt = null;
 let scanStream = null;
 let scanTimer = null;
 let adminQrPayload = "";
+let inviteQrPayload = "";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const qrPrefix = "fitness-park-hemmingen|checkin|";
@@ -18,11 +19,12 @@ const supabaseConfig = {
 let remoteReady = false;
 let remoteVisits = [];
 let remoteSystemLog = [];
-const member = { name: "Anna Meyer", initials: "AM", number: "4711" };
+let member = { name: "Anna Meyer", initials: "AM", number: "4711", email: "anna@example.de", demo: true };
 const storageKeys = {
   activeVisit: "fitnessParkActiveVisit",
   visits: "fitnessParkVisits",
-  log: "fitnessParkSystemLog"
+  log: "fitnessParkSystemLog",
+  member: "fitnessParkMemberProfile"
 };
 const demoVisits = [
   { start: "2026-07-26T18:42:00", end: "2026-07-26T20:06:00", status: "Regulär" },
@@ -34,7 +36,7 @@ const demoVisits = [
 function initialsList(target, filter = "") {
   const normalized = filter.trim().toLowerCase();
   const active = activeVisitForDisplay();
-  const realRows = active ? [[active.memberName || member.name, member.initials, formatTime(active.start), durationText(new Date(active.start), new Date())]] : [];
+  const realRows = active ? [[active.memberName || member.name, initialsFromName(active.memberName || member.name), formatTime(active.start), durationText(new Date(active.start), new Date())]] : [];
   const rows = [...realRows, ...people].filter(([name]) => name.toLowerCase().includes(normalized));
   target.innerHTML = rows.map(([name, initials, time, duration]) => `
     <article class="person">
@@ -72,6 +74,47 @@ function readJson(key, fallback) {
 
 function writeJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+function initialsFromName(name) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("") || "FP";
+}
+
+function loadMemberProfile() {
+  return readJson(storageKeys.member, member);
+}
+
+function saveMemberProfile(profile) {
+  member = {
+    ...profile,
+    name: profile.name.trim(),
+    number: profile.number.trim(),
+    email: profile.email?.trim() || "",
+    initials: initialsFromName(profile.name),
+    demo: false,
+    registeredAt: profile.registeredAt || new Date().toISOString()
+  };
+  writeJson(storageKeys.member, member);
+  renderMemberProfile();
+}
+
+function renderMemberProfile() {
+  const firstName = member.name.split(" ")[0] || member.name;
+  $("#roleToggle").textContent = member.initials;
+  $("#memberGreeting").textContent = `Hallo, ${firstName}.`;
+  $("#profileAvatar").textContent = member.initials;
+  $("#profileName").textContent = member.name;
+  $("#profileNumber").textContent = member.number;
+  $("#profileEmail").textContent = member.email || "nicht hinterlegt";
+  $("#profileSince").textContent = member.demo
+    ? "Demo-Mitglied seit Januar 2022"
+    : `Verknüpft seit ${new Date(member.registeredAt).toLocaleDateString("de-DE", { month: "long", year: "numeric" })}`;
+  $("#todayLabel").textContent = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long" });
 }
 
 function loadVisits() {
@@ -183,6 +226,20 @@ async function addRemoteSystemLog(entry) {
   });
 }
 
+async function createRemoteMember(profile) {
+  await supabaseRequest("fitness_members?on_conflict=member_number", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      name: profile.name,
+      initials: profile.initials,
+      member_number: profile.number,
+      email: profile.email || null,
+      device_label: navigator.userAgent.slice(0, 140)
+    })
+  });
+}
+
 function completedVisitsForDisplay() {
   return remoteReady ? remoteVisits.filter((visit) => visit.end) : loadVisits();
 }
@@ -222,7 +279,7 @@ function visitRow(visit, tag = "Regulär") {
 function operatorVisitRow(visit) {
   const end = visit.end ? `${formatTime(visit.end)} Uhr` : "läuft gerade";
   const duration = visit.end ? durationText(new Date(visit.start), new Date(visit.end)) : durationText(new Date(visit.start));
-  return `<article class="visit-log-row"><div><strong>${member.name}</strong><span>${formatTime(visit.start)} Uhr – ${end}</span></div><b>${duration}</b></article>`;
+  return `<article class="visit-log-row"><div><strong>${visit.memberName || member.name}</strong><span>${formatTime(visit.start)} Uhr – ${end}</span></div><b>${duration}</b></article>`;
 }
 
 function renderLogs() {
@@ -255,11 +312,31 @@ function generateQrPayload() {
   return adminQrPayload;
 }
 
+function generateInvitePayload() {
+  const token = crypto.getRandomValues(new Uint32Array(2));
+  const inviteToken = `${Date.now()}-${token[0].toString(36)}${token[1].toString(36)}`;
+  inviteQrPayload = `${location.origin}${location.pathname}?invite=${encodeURIComponent(inviteToken)}`;
+  return inviteQrPayload;
+}
+
+function qrImageUrl(payload, size = 260) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=14&data=${encodeURIComponent(payload)}`;
+}
+
 function renderAdminQr() {
   const payload = generateQrPayload();
-  const url = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=14&data=${encodeURIComponent(payload)}`;
+  const url = qrImageUrl(payload);
   $("#adminQrCode").src = url;
+  $("#staffQrCode").src = url;
   $("#adminQrPayload").textContent = payload;
+}
+
+function renderInviteQr() {
+  const payload = generateInvitePayload();
+  const url = qrImageUrl(payload);
+  $("#adminInviteQrCode").src = url;
+  $("#staffInviteQrCode").src = url;
+  $("#adminInvitePayload").textContent = payload;
 }
 
 function validStudioQr(value) {
@@ -425,6 +502,34 @@ $("#refreshQr").addEventListener("click", () => {
   renderAdminQr();
   toast("Neuer Check-in-QR-Code erzeugt");
 });
+$("#refreshInviteQr").addEventListener("click", () => {
+  renderInviteQr();
+  toast("Neuer Einladungs-QR-Code erzeugt");
+});
+$("#registerForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const profile = {
+    name: $("#registerName").value,
+    number: $("#registerNumber").value,
+    email: $("#registerEmail").value
+  };
+  saveMemberProfile(profile);
+  const logEntry = addSystemLog("Registrierung", `${member.name} hat dieses Gerät verknüpft.`);
+  try {
+    if (remoteReady) {
+      await createRemoteMember(member);
+      await addRemoteSystemLog(logEntry);
+      await loadRemoteState();
+    }
+  } catch (error) {
+    remoteReady = false;
+    console.warn("Remote member registration failed", error);
+  }
+  history.replaceState(null, "", location.pathname);
+  renderLogs();
+  go("home");
+  toast("App erfolgreich verknüpft");
+});
 ["#newIncident","#newIncident2"].forEach((id) => $(id).addEventListener("click", () => $("#incidentDialog").showModal()));
 $("#viewIncident").addEventListener("click", () => $("#resultDialog").showModal());
 $("#incidentForm").addEventListener("submit", (event) => {
@@ -442,7 +547,10 @@ $$(".filter-row button").forEach((button) => button.addEventListener("click", ()
 }));
 
 renderAdminQr();
+renderInviteQr();
 async function bootApp() {
+  member = loadMemberProfile();
+  renderMemberProfile();
   await loadRemoteState();
   const restoredVisit = activeVisitForDisplay() || loadActiveVisit();
   if (restoredVisit) {
@@ -450,6 +558,9 @@ async function bootApp() {
     checkInAt = new Date(restoredVisit.start);
   }
   renderLogs();
+  if (new URLSearchParams(location.search).has("invite") && member.demo) {
+    go("register");
+  }
   setInterval(updateDuration, 1000);
 }
 bootApp();
